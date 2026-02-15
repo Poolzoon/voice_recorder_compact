@@ -1,5 +1,11 @@
 <template>
-  <div class="voice-recorder" :class="[`is-${uiState}`, { 'is-disabled': isDisabled }]" role="group" aria-label="Voice recorder">
+  <div
+    class="voice-recorder"
+    :class="[`is-${uiState}`, { 'is-disabled': isDisabled }]"
+    :style="componentStyleVars"
+    role="group"
+    aria-label="Voice recorder"
+  >
     <button
       v-if="isIdleWithoutAudio"
       class="icon-btn icon-btn-mic single"
@@ -60,7 +66,7 @@
 
         <template v-else-if="hasPlayableAudio">
           <button
-            class="icon-btn"
+            class="icon-btn icon-btn-play"
             type="button"
             :disabled="transitionLock || isDisabled"
             :aria-label="isPlaybackActive ? stopPlayButtonLabel : playButtonLabel"
@@ -168,9 +174,33 @@ const resumeButtonLabel = computed(() => String(props?.content?.resumeButtonLabe
 const playButtonLabel = computed(() => String(props?.content?.playButtonLabel || 'Play'));
 const stopPlayButtonLabel = computed(() => String(props?.content?.stopPlayButtonLabel || 'Stop'));
 const deleteButtonLabel = computed(() => String(props?.content?.deleteButtonLabel || 'Delete'));
-const visualizerBackgroundColor = computed(() => String(props?.content?.visualizerBackgroundColor || '#111827'));
-const visualizerBarsColor = computed(() => String(props?.content?.visualizerBarsColor || '#10b981'));
-const visualizerPausedBarsColor = computed(() => String(props?.content?.visualizerPausedBarsColor || '#9ca3af'));
+const visualizerBackgroundColor = computed(() => resolveColor(props?.content?.visualizerBackgroundColor, 'transparent'));
+const visualizerBarsColor = computed(() => resolveColor(props?.content?.visualizerBarsColor, '#10b981'));
+const visualizerPausedBarsColor = computed(() => resolveColor(props?.content?.visualizerPausedBarsColor, '#9ca3af'));
+const timerFontFamily = computed(() => String(props?.content?.timerFontFamily || 'inherit'));
+const timerFontSize = computed(() => {
+  const size = Number(props?.content?.timerFontSize ?? 30);
+  return Number.isFinite(size) ? Math.max(10, size) : 30;
+});
+const timerFontWeight = computed(() => {
+  const value = String(props?.content?.timerFontWeight || '500');
+  return ['400', '500', '600', '700'].includes(value) ? value : '500';
+});
+const timerColor = computed(() => resolveColor(props?.content?.timerColor, '#8b5cf6'));
+const buttonSize = computed(() => {
+  const value = Number(props?.content?.buttonSize ?? 42);
+  return Number.isFinite(value) ? Math.max(24, value) : 42;
+});
+const buttonIconSize = computed(() => {
+  const value = Number(props?.content?.buttonIconSize ?? 20);
+  return Number.isFinite(value) ? Math.max(10, value) : 20;
+});
+const buttonIconColor = computed(() => resolveColor(props?.content?.buttonIconColor, '#ffffff'));
+const playButtonColor = computed(() => resolveColor(props?.content?.playButtonColor, '#8b5cf6'));
+const pauseButtonColor = computed(() => resolveColor(props?.content?.pauseButtonColor, '#0ea5e9'));
+const stopButtonColor = computed(() => resolveColor(props?.content?.stopButtonColor, '#f59e0b'));
+const deleteButtonColor = computed(() => resolveColor(props?.content?.deleteButtonColor, '#ef4444'));
+const micButtonColor = computed(() => resolveColor(props?.content?.micButtonColor, '#8b5cf6'));
 const outputFormat = computed(() => {
   const format = props?.content?.outputFormat;
   return format === 'file' || format === 'base64' ? format : 'blob';
@@ -206,6 +236,23 @@ const timerLabel = computed(() => {
   }
   return formatMsAsClock(elapsedMs.value);
 });
+const componentStyleVars = computed(() => ({
+  '--vr-visualizer-bg': visualizerBackgroundColor.value,
+  '--vr-visualizer-bars': visualizerBarsColor.value,
+  '--vr-visualizer-paused': visualizerPausedBarsColor.value,
+  '--vr-timer-font-family': timerFontFamily.value,
+  '--vr-timer-font-size': `${timerFontSize.value}px`,
+  '--vr-timer-font-weight': timerFontWeight.value,
+  '--vr-timer-color': timerColor.value,
+  '--vr-button-size': `${buttonSize.value}px`,
+  '--vr-button-icon-size': `${buttonIconSize.value}px`,
+  '--vr-button-icon-color': buttonIconColor.value,
+  '--vr-button-play': playButtonColor.value,
+  '--vr-button-pause': pauseButtonColor.value,
+  '--vr-button-stop': stopButtonColor.value,
+  '--vr-button-delete': deleteButtonColor.value,
+  '--vr-button-mic': micButtonColor.value,
+}));
 
 function frontWindow() {
   return wwLib?.getFrontWindow?.();
@@ -220,6 +267,17 @@ function formatMsAsClock(ms) {
   const mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
   const ss = String(totalSec % 60).padStart(2, '0');
   return `${mm}:${ss}`;
+}
+
+function resolveColor(input, fallback) {
+  if (typeof input === 'string' && input.trim()) return input;
+  if (input && typeof input === 'object') {
+    const candidates = [input?.color, input?.value, input?.hex, input?.rgb, input?.rgba, input?.hsl, input?.hsla];
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) return candidate;
+    }
+  }
+  return fallback;
 }
 
 function resolveOutputVariableId(target) {
@@ -362,8 +420,10 @@ function drawPlaybackWave() {
     : 1;
 
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = visualizerBackgroundColor.value;
-  ctx.fillRect(0, 0, width, height);
+  if (visualizerBackgroundColor.value !== 'transparent') {
+    ctx.fillStyle = visualizerBackgroundColor.value;
+    ctx.fillRect(0, 0, width, height);
+  }
 
   for (let i = 0; i < bars.length; i += 1) {
     const bar = Math.min(1, Math.max(0.06, bars[i] || 0.1));
@@ -371,7 +431,7 @@ function drawPlaybackWave() {
     const x = offsetX + i * (barWidth + spacing);
     const y = Math.floor((height - barHeight) / 2);
     const ratio = bars.length <= 1 ? 1 : i / (bars.length - 1);
-    ctx.fillStyle = ratio <= progressRatio ? visualizerBarsColor.value : '#d1d5db';
+    ctx.fillStyle = ratio <= progressRatio ? visualizerBarsColor.value : visualizerPausedBarsColor.value;
     ctx.fillRect(x, y, barWidth, barHeight);
   }
 }
@@ -1038,11 +1098,11 @@ onBeforeUnmount(() => {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 8px 10px 8px 14px;
-  border-radius: 999px;
-  border: 1px solid #eceff5;
-  background: #fff;
-  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.08);
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .actions {
@@ -1052,12 +1112,12 @@ onBeforeUnmount(() => {
 }
 
 .icon-btn {
-  width: 42px;
-  height: 42px;
+  width: var(--vr-button-size);
+  height: var(--vr-button-size);
   border: 0;
   border-radius: 999px;
-  background: #8b5cf6;
-  color: #fff;
+  background: var(--vr-button-play);
+  color: var(--vr-button-icon-color);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1066,25 +1126,29 @@ onBeforeUnmount(() => {
 }
 
 .icon-btn svg {
-  width: 20px;
-  height: 20px;
+  width: var(--vr-button-icon-size);
+  height: var(--vr-button-icon-size);
   fill: currentColor;
 }
 
+.icon-btn-play {
+  background: var(--vr-button-play);
+}
+
 .icon-btn-delete {
-  background: #ef4444;
+  background: var(--vr-button-delete);
 }
 
 .icon-btn-pause {
-  background: #0ea5e9;
+  background: var(--vr-button-pause);
 }
 
 .icon-btn-stop {
-  background: #f59e0b;
+  background: var(--vr-button-stop);
 }
 
 .icon-btn-mic {
-  background: #8b5cf6;
+  background: var(--vr-button-mic);
 }
 
 .icon-btn.single {
@@ -1099,9 +1163,11 @@ onBeforeUnmount(() => {
 .timer {
   min-width: 50px;
   font-variant-numeric: tabular-nums;
-  font-size: 30px;
+  font-family: var(--vr-timer-font-family);
+  font-size: var(--vr-timer-font-size);
+  font-weight: var(--vr-timer-font-weight);
   line-height: 1;
-  color: #8b5cf6;
+  color: var(--vr-timer-color);
 }
 
 .visualizer {
@@ -1109,7 +1175,7 @@ onBeforeUnmount(() => {
   height: 84px;
   border: 0;
   border-radius: 10px;
-  background: v-bind(visualizerBackgroundColor);
+  background: var(--vr-visualizer-bg);
 }
 
 .compact-wave {
@@ -1132,17 +1198,6 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .compact-shell {
     gap: 8px;
-    padding: 8px;
-  }
-
-  .timer {
-    font-size: 24px;
-    min-width: 40px;
-  }
-
-  .icon-btn {
-    width: 38px;
-    height: 38px;
   }
 }
 </style>
