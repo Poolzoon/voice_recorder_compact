@@ -216,7 +216,7 @@ const isPaused = computed(() => uiState.value === 'paused');
 const isActive = computed(() => isRecording.value || isPaused.value);
 const canPauseResume = computed(() => isActive.value);
 const hasPlayableAudio = computed(() => !!latestPlayableUrl.value);
-const canSeekWave = computed(() => isPlaybackActive.value && !isActive.value && !transitionLock.value && !isDisabled.value);
+const canSeekWave = computed(() => hasPlayableAudio.value && !isActive.value && !transitionLock.value && !isDisabled.value);
 const isIdleWithoutAudio = computed(() => !hasPlayableAudio.value && !isActive.value && uiState.value !== 'stopping');
 
 const elapsedMs = computed(() => {
@@ -656,12 +656,40 @@ function seekPlaybackByClientX(clientX) {
   if (!rect?.width) return;
 
   const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-  const durationSec = Number(audioPlayerRef.value.duration || 0);
+  const durationSec = resolveSeekDurationSec(audioPlayerRef.value);
   if (!Number.isFinite(durationSec) || durationSec <= 0) return;
 
-  audioPlayerRef.value.currentTime = ratio * durationSec;
-  playbackCurrentMs.value = Math.round(audioPlayerRef.value.currentTime * 1000);
+  const targetSec = ratio * durationSec;
+  try {
+    if (typeof audioPlayerRef.value.fastSeek === 'function') {
+      audioPlayerRef.value.fastSeek(targetSec);
+    } else {
+      audioPlayerRef.value.currentTime = targetSec;
+    }
+  } catch (_) {
+    const safeTarget = Math.max(0, Math.min(targetSec, Math.max(0, durationSec - 0.01)));
+    audioPlayerRef.value.currentTime = safeTarget;
+  }
+  playbackCurrentMs.value = Math.round((audioPlayerRef.value.currentTime || 0) * 1000);
   drawPlaybackWave();
+}
+
+function resolveSeekDurationSec(audio) {
+  const directDuration = Number(audio?.duration || 0);
+  if (Number.isFinite(directDuration) && directDuration > 0) return directDuration;
+
+  const seekable = audio?.seekable;
+  if (seekable && typeof seekable.length === 'number' && seekable.length > 0) {
+    try {
+      const end = Number(seekable.end(seekable.length - 1) || 0);
+      if (Number.isFinite(end) && end > 0) return end;
+    } catch (_) {
+      // no-op
+    }
+  }
+
+  const fallback = recordedDurationMs.value / 1000;
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
 }
 
 function onWavePointerMove(event) {
