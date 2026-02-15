@@ -1,0 +1,238 @@
+export default {
+  editor: {
+    label: {
+      en: 'Voice Recorder',
+    },
+    icon: 'mic',
+    customStylePropertiesOrder: ['mode', 'maxDurationSec', 'outputVariable'],
+  },
+  properties: {
+    mode: {
+      label: { en: 'Mode' },
+      type: 'TextSelect',
+      section: 'settings',
+      options: {
+        options: [
+          { value: 'manual', label: 'Manual' },
+          { value: 'autoStop', label: 'Auto-stop on silence' },
+        ],
+      },
+      defaultValue: 'manual',
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: 'string',
+        tooltip: 'Valid values: manual | autoStop',
+      },
+      /* wwEditor:end */
+    },
+    maxDurationSec: {
+      label: { en: 'Max Duration (sec)' },
+      type: 'Number',
+      section: 'settings',
+      defaultValue: 60,
+      min: 0,
+      step: 1,
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: 'number',
+        tooltip: '0 means unlimited recording duration',
+      },
+      /* wwEditor:end */
+    },
+    showVisualizer: {
+      label: { en: 'Show Visualizer' },
+      type: 'OnOff',
+      section: 'settings',
+      defaultValue: true,
+      bindable: true,
+    },
+    showTimer: {
+      label: { en: 'Show Timer' },
+      type: 'OnOff',
+      section: 'settings',
+      defaultValue: true,
+      bindable: true,
+    },
+    startButtonLabel: {
+      label: { en: 'Start Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Start',
+      bindable: true,
+    },
+    stopButtonLabel: {
+      label: { en: 'Stop Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Stop',
+      bindable: true,
+    },
+    pauseButtonLabel: {
+      label: { en: 'Pause Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Pause',
+      bindable: true,
+    },
+    resumeButtonLabel: {
+      label: { en: 'Resume Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Resume',
+      bindable: true,
+    },
+    playButtonLabel: {
+      label: { en: 'Play Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Play',
+      bindable: true,
+    },
+    stopPlayButtonLabel: {
+      label: { en: 'Stop Play Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Stop',
+      bindable: true,
+    },
+    deleteButtonLabel: {
+      label: { en: 'Delete Button Label' },
+      type: 'Text',
+      section: 'settings',
+      defaultValue: 'Delete',
+      bindable: true,
+    },
+    disabled: {
+      label: { en: 'Disabled' },
+      type: 'OnOff',
+      section: 'settings',
+      defaultValue: false,
+      bindable: true,
+    },
+
+    noiseCalibrationMs: {
+      label: { en: 'Noise Calibration (ms)' },
+      type: 'Number',
+      section: 'autoStop',
+      defaultValue: 500,
+      min: 0,
+      step: 50,
+      bindable: true,
+      hidden: content => content?.mode !== 'autoStop',
+    },
+    silenceDurationMs: {
+      label: { en: 'Silence Duration (ms)' },
+      type: 'Number',
+      section: 'autoStop',
+      defaultValue: 1500,
+      min: 100,
+      step: 50,
+      bindable: true,
+      hidden: content => content?.mode !== 'autoStop',
+    },
+    thresholdMultiplier: {
+      label: { en: 'Threshold Multiplier' },
+      type: 'Number',
+      section: 'autoStop',
+      defaultValue: 2.2,
+      min: 1,
+      step: 0.1,
+      bindable: true,
+      hidden: content => content?.mode !== 'autoStop',
+    },
+    minSpeechMsBeforeAutoStop: {
+      label: { en: 'Min Speech Before Auto-stop (ms)' },
+      type: 'Number',
+      section: 'autoStop',
+      defaultValue: 800,
+      min: 0,
+      step: 50,
+      bindable: true,
+      hidden: content => content?.mode !== 'autoStop',
+    },
+
+    preferredMimeType: {
+      label: { en: 'Preferred MIME Type' },
+      type: 'Text',
+      section: 'format',
+      defaultValue: 'audio/webm;codecs=opus',
+      bindable: true,
+      /* wwEditor:start */
+      propertyHelp: {
+        tooltip: 'Fallback order: audio/webm;codecs=opus, audio/webm, audio/mp4, audio/aac',
+      },
+      /* wwEditor:end */
+    },
+    outputFormat: {
+      label: { en: 'Output Format' },
+      type: 'TextSelect',
+      section: 'format',
+      options: {
+        options: [
+          { value: 'blob', label: 'Blob' },
+          { value: 'file', label: 'File' },
+          { value: 'base64', label: 'Base64' },
+        ],
+      },
+      defaultValue: 'blob',
+      bindable: true,
+      /* wwEditor:start */
+      bindingValidation: {
+        type: 'string',
+        tooltip: 'Valid values: blob | file | base64',
+      },
+      /* wwEditor:end */
+    },
+    outputVariable: {
+      label: { en: 'Output Variable' },
+      type: 'Text',
+      section: 'format',
+      defaultValue: '',
+      bindable: true,
+      /* wwEditor:start */
+      propertyHelp: {
+        tooltip: 'Bind this property to a WeWeb variable target where the output object will be written.',
+      },
+      bindingValidation: {
+        type: 'string',
+        tooltip: 'Expected variable identifier or bound variable reference.',
+      },
+      /* wwEditor:end */
+    },
+    visualizerBackgroundColor: {
+      label: { en: 'Visualizer Background Color' },
+      type: 'Color',
+      section: 'style',
+      defaultValue: '#111827',
+      bindable: true,
+    },
+    visualizerBarsColor: {
+      label: { en: 'Visualizer Bars Color' },
+      type: 'Color',
+      section: 'style',
+      defaultValue: '#10b981',
+      bindable: true,
+    },
+    visualizerPausedBarsColor: {
+      label: { en: 'Visualizer Paused Bars Color' },
+      type: 'Color',
+      section: 'style',
+      defaultValue: '#9ca3af',
+      bindable: true,
+    },
+  },
+  triggerEvents: [
+    { name: 'onStart', label: { en: 'On start' }, event: { mode: '', mimeType: '', startedAt: 0 } },
+    { name: 'onPause', label: { en: 'On pause' }, event: { elapsedMs: 0, mode: '' } },
+    { name: 'onResume', label: { en: 'On resume' }, event: { elapsedMs: 0, mode: '' } },
+    { name: 'onStop', label: { en: 'On stop' }, event: { stoppedReason: '', durationMs: 0 } },
+    { name: 'onPlay', label: { en: 'On play' }, event: { objectUrl: '', mimeType: '' } },
+    { name: 'onDelete', label: { en: 'On delete' }, event: { hadAudio: true } },
+    { name: 'onAutoStop', label: { en: 'On auto-stop' }, event: { stoppedReason: '', durationMs: 0 } },
+    { name: 'onSave', label: { en: 'On save' }, event: { status: '', size: 0, durationMs: 0 } },
+    { name: 'onError', label: { en: 'On error' }, event: { code: '', message: '' } },
+    { name: 'onPermissionDenied', label: { en: 'On permission denied' }, event: { code: '', message: '' } },
+  ],
+};

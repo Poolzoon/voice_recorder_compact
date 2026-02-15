@@ -1,0 +1,14 @@
+{
+  "name": "weweb-voice-recorder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeWeb custom Voice Recorder component with VAD auto-stop and variable output",
+  "scripts": {
+    "serve": "weweb serve",
+    "build": "weweb build",
+    "build:voice-recorder": "weweb build --name=voice-recorder"
+  },
+  "dependencies": {
+    "@weweb/cli": "latest"
+  }
+}
